@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>토베니 소개</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #cfe8fc;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --accent: #d97757;
+      --accent-soft: #fbeee8;
+      --border: #e7e5e0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1e2e;
+        --card: #1f2024;
+        --text: #ececec;
+        --muted: #9ca3af;
+        --accent: #e8906f;
+        --accent-soft: #2e2320;
+        --border: #2d2f34;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Noto Sans KR", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      line-height: 1.6;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+      text-align: center;
+    }
+
+    .avatar {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      font-weight: 700;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .greeting {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+
+    .info {
+      list-style: none;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info li {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .icon {
+      flex-shrink: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .value {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .value.highlight { color: var(--accent); }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+    }
+
+    footer {
+      margin-top: 28px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="avatar">토</div>
+    <h1>토베니</h1>
+    <p class="greeting">안녕하세요, 만나서 반가워요! 👋</p>
+
+    <ul class="info">
+      <li>
+        <span class="icon">✨</span>
+        <div>
+          <div class="label">취미</div>
+          <div class="tags">
+            <span class="tag">🎹 피아노</span>
+            <span class="tag">🩰 발레</span>
+            <span class="tag">🖌️ 그림</span>
+          </div>
+        </div>
+      </li>
+      <li>
+        <span class="icon">📚</span>
+        <div>
+          <div class="label">요즘 배우고 있는 것</div>
+          <div class="value highlight">Claude Code</div>
+        </div>
+      </li>
+    </ul>
+
+    <footer>© 2026 토베니</footer>
+  </main>
+</body>
+</html>
