@@ -5,7 +5,12 @@ from pathlib import Path
 notes_dir = Path(__file__).resolve().parent / "notes"
 notes_dir.mkdir(exist_ok=True)
 
-note_path = notes_dir / f"{date.today():%Y-%m-%d}.md"
+# 실행할 때 오늘 날짜를 요일과 함께 보여주기
+today = date.today()
+weekdays = ["월", "화", "수", "목", "금", "토", "일"]
+print(f"오늘은 {today.year}년 {today.month:02d}월 {today.day:02d}일 ({weekdays[today.weekday()]}요일)입니다.")
+
+note_path = notes_dir / f"{today:%Y-%m-%d}.md"
 
 if note_path.exists():
     print(f"이미 오늘 메모가 있습니다: {note_path}")
