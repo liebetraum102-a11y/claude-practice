@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나의 독서기록</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>📚 나의 독서기록</h1>
+  </header>
+
+  <main>
+    <!-- 책 추가 칸 -->
+    <section>
+      <h2>책 추가하기</h2>
+      <form id="book-form">
+        <label for="title">제목</label>
+        <input type="text" id="title" required>
+
+        <label for="author">작가</label>
+        <input type="text" id="author" required>
+
+        <label for="rating">평점</label>
+        <select id="rating">
+          <option value="">선택 안 함</option>
+          <option value="5">★★★★★ (5)</option>
+          <option value="4">★★★★ (4)</option>
+          <option value="3">★★★ (3)</option>
+          <option value="2">★★ (2)</option>
+          <option value="1">★ (1)</option>
+        </select>
+
+        <label for="review">한줄평</label>
+        <input type="text" id="review">
+
+        <button type="submit">추가</button>
+      </form>
+    </section>
+
+    <!-- 책 목록이 들어갈 자리 -->
+    <section>
+      <h2>읽은 책 목록</h2>
+      <ul id="book-list"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
