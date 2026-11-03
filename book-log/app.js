@@ -34,4 +34,34 @@ function renderBooks(books) {
   }
 }
 
-renderBooks(loadBooks());
+const books = loadBooks();
+renderBooks(books);
+
+// 폼을 제출하면 새 책을 저장하고 목록을 다시 그린다.
+const form = document.getElementById("book-form");
+form.addEventListener("submit", (event) => {
+  event.preventDefault(); // 페이지가 새로고침되지 않게 막는다.
+
+  const title = document.getElementById("title").value.trim();
+  const author = document.getElementById("author").value.trim();
+  const rating = document.getElementById("rating").value;
+  const review = document.getElementById("review").value.trim();
+
+  // 공백만 입력한 경우는 브라우저가 걸러 주지 않아서 직접 확인한다.
+  if (title === "" || author === "") {
+    alert("제목과 작가를 입력해 주세요.");
+    return;
+  }
+
+  books.push({
+    id: Math.max(0, ...books.map((book) => book.id)) + 1,
+    title,
+    author,
+    rating: rating === "" ? null : Number(rating),
+    review,
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+
+  renderBooks(books);
+  form.reset();
+});
