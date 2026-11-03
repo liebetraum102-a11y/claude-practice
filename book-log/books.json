@@ -5,5 +5,19 @@
     "author": "생텍쥐페리",
     "rating": 5,
     "review": ""
+  },
+  {
+    "id": 2,
+    "title": "아몬드",
+    "author": "손원평",
+    "rating": null,
+    "review": ""
+  },
+  {
+    "id": 3,
+    "title": "달의 지배자",
+    "author": "N.K. 제미신",
+    "rating": null,
+    "review": ""
   }
 ]
