@@ -30,8 +30,27 @@ function renderBooks(books) {
     if (book.review !== "") {
       item.textContent += ` : ${book.review}`;
     }
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.textContent = "삭제";
+    deleteButton.addEventListener("click", () => deleteBook(book.id));
+    item.append(" ", deleteButton);
+
     list.appendChild(item);
   }
+}
+
+// 확인을 받은 뒤 책을 지우고 목록을 다시 그린다.
+function deleteBook(id) {
+  const index = books.findIndex((book) => book.id === id);
+  if (!confirm(`"${books[index].title}"을(를) 정말 삭제할까요?`)) {
+    return;
+  }
+
+  books.splice(index, 1);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  renderBooks(books);
 }
 
 const books = loadBooks();
