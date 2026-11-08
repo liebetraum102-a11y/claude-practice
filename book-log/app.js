@@ -1,11 +1,14 @@
 // localStorage에 저장할 때 쓰는 이름
 const STORAGE_KEY = "books";
 
+// 날짜 기능이 생기기 전에 넣은 책들의 입력 날짜 (2026년 11월 9일)
+const LEGACY_ADDED_AT = new Date(2026, 10, 9).toISOString(); // 월은 0부터 시작해서 10 = 11월
+
 // 저장된 데이터가 없을 때 처음 한 번만 넣는 책들
 const INITIAL_BOOKS = [
-  { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "" },
-  { id: 2, title: "아몬드", author: "손원평", rating: null, review: "" },
-  { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "" },
+  { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT },
+  { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
+  { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
 ];
 
 // 저장된 책 목록을 읽어 온다. 처음 열었다면 초기 데이터를 먼저 저장한다.
@@ -15,7 +18,20 @@ function loadBooks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_BOOKS));
     return INITIAL_BOOKS;
   }
-  return JSON.parse(saved);
+
+  // 날짜 없이 저장된 예전 책에는 LEGACY_ADDED_AT을 채워서 다시 저장한다.
+  const books = JSON.parse(saved);
+  let changed = false;
+  for (const book of books) {
+    if (!book.addedAt) {
+      book.addedAt = LEGACY_ADDED_AT;
+      changed = true;
+    }
+  }
+  if (changed) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  }
+  return books;
 }
 
 // 책 목록을 화면에 그린다.
@@ -78,6 +94,7 @@ form.addEventListener("submit", (event) => {
     author,
     rating: rating === "" ? null : Number(rating),
     review,
+    addedAt: new Date().toISOString(), // 입력한 시각 (리포트에서 날짜 표시·정렬에 사용)
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
 

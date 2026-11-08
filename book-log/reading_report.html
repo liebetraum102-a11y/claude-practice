@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>나의 독서 리포트</title>
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --card: #ffffff;
+      --text: #2b2b2b;
+      --muted: #8a8577;
+      --line: #e8e3d8;
+      --accent: #c8963e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      line-height: 1.6;
+    }
+
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    header { margin-bottom: 36px; }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* 요약 숫자 */
+    .summary {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px 20px;
+      min-width: 140px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* 책 카드 */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    }
+
+    .title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .author {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .date {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .rating {
+      font-size: 17px;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+
+    .rating .empty-star { color: var(--line); }
+
+    .rating.none {
+      font-size: 13px;
+      letter-spacing: 0;
+      color: var(--muted);
+    }
+
+    .review {
+      margin: 6px 0 0;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      font-size: 15px;
+    }
+
+    .review.none {
+      color: var(--muted);
+      font-style: italic;
+      font-size: 14px;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: var(--muted);
+      padding: 60px 0;
+    }
+
+    .source {
+      margin-top: 40px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>📖 나의 독서 리포트</h1>
+      <p class="subtitle">지금까지 읽은 책들을 한눈에 모아봤어요.</p>
+      <div class="summary">
+        <div class="stat">
+          <div class="stat-label">읽은 책</div>
+          <div class="stat-value" id="total-count">0권</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">평균 평점</div>
+          <div class="stat-value" id="average-rating">-</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <ul class="cards" id="cards"></ul>
+    </main>
+
+    <p class="source" id="source"></p>
+  </div>
+
+  <script>
+    // 앱(app.js)과 같은 이름으로 저장된 기록을 읽는다.
+    const STORAGE_KEY = "books";
+
+    // 날짜 기능이 생기기 전에 넣은 책들의 입력 날짜 (app.js와 같은 값, 2026년 11월 9일)
+    const LEGACY_ADDED_AT = new Date(2026, 10, 9).toISOString();
+
+    // 저장된 기록이 없을 때 보여줄 데이터 (books.json과 같은 내용)
+    const INITIAL_BOOKS = [
+      { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT },
+      { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
+      { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
+    ];
+
+    // localStorage에 기록이 있으면 그걸 쓰고, 없으면 초기 데이터를 쓴다.
+    // 날짜 없는 예전 책은 화면에서만 LEGACY_ADDED_AT으로 보여준다. (저장은 앱이 한다)
+    function loadBooks() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === null) {
+        return { books: INITIAL_BOOKS, fromStorage: false };
+      }
+      const books = JSON.parse(saved).map((book) =>
+        book.addedAt ? book : { ...book, addedAt: LEGACY_ADDED_AT }
+      );
+      return { books, fromStorage: true };
+    }
+
+    // 평점을 별 5개로 표시한다. (채운 별 + 빈 별)
+    function makeRating(rating) {
+      const el = document.createElement("div");
+      el.className = "rating";
+      if (rating === null || rating === undefined) {
+        el.classList.add("none");
+        el.textContent = "평점 없음";
+        return el;
+      }
+      el.textContent = "★".repeat(rating);
+      const empty = document.createElement("span");
+      empty.className = "empty-star";
+      empty.textContent = "★".repeat(5 - rating);
+      el.appendChild(empty);
+      el.setAttribute("aria-label", `평점 ${rating}점`);
+      return el;
+    }
+
+    // 입력 날짜를 "2026년 11월 9일" 형태로 바꾼다. 날짜가 없으면 안내 문구를 쓴다.
+    function formatDate(addedAt) {
+      if (!addedAt) {
+        return "날짜 기록 없음";
+      }
+      const date = new Date(addedAt);
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 기록`;
+    }
+
+    // 최신순 정렬: 입력 시각이 늦은 책이 앞으로, 날짜가 없는 책은 뒤로.
+    // 날짜가 같거나 둘 다 없으면 나중에 추가된 책(id가 큰 책)이 앞으로.
+    function sortByNewest(books) {
+      return [...books].sort((a, b) => {
+        if (a.addedAt && b.addedAt) {
+          const diff = new Date(b.addedAt) - new Date(a.addedAt);
+          if (diff !== 0) return diff;
+        }
+        if (a.addedAt && !b.addedAt) return -1;
+        if (!a.addedAt && b.addedAt) return 1;
+        return b.id - a.id;
+      });
+    }
+
+    // 책 한 권을 카드로 만든다. (textContent를 써서 입력한 글자가 그대로 보이게)
+    function makeCard(book) {
+      const card = document.createElement("li");
+      card.className = "card";
+
+      const date = document.createElement("p");
+      date.className = "date";
+      date.textContent = formatDate(book.addedAt);
+
+      const title = document.createElement("h2");
+      title.className = "title";
+      title.textContent = book.title;
+
+      const author = document.createElement("p");
+      author.className = "author";
+      author.textContent = book.author;
+
+      const review = document.createElement("p");
+      review.className = "review";
+      if (book.review) {
+        review.textContent = `“${book.review}”`;
+      } else {
+        review.classList.add("none");
+        review.textContent = "아직 한줄평이 없어요.";
+      }
+
+      card.append(date, title, author, makeRating(book.rating), review);
+      return card;
+    }
+
+    function render() {
+      const { books, fromStorage } = loadBooks();
+      const list = document.getElementById("cards");
+
+      if (books.length === 0) {
+        list.outerHTML = '<p class="empty-message">아직 기록된 책이 없어요.</p>';
+      } else {
+        for (const book of sortByNewest(books)) {
+          list.appendChild(makeCard(book));
+        }
+      }
+
+      // 요약: 전체 권수와 평점이 있는 책들의 평균
+      document.getElementById("total-count").textContent = `${books.length}권`;
+      const rated = books.filter((book) => book.rating !== null && book.rating !== undefined);
+      if (rated.length > 0) {
+        const avg = rated.reduce((sum, book) => sum + book.rating, 0) / rated.length;
+        document.getElementById("average-rating").textContent = `★ ${avg.toFixed(1)}`;
+      }
+
+      document.getElementById("source").textContent = fromStorage
+        ? "독서기록 앱에 저장된 데이터를 보여주고 있어요."
+        : "앱에 저장된 기록이 없어 초기 데이터(books.json)를 보여주고 있어요.";
+    }
+
+    render();
+  </script>
+</body>
+</html>

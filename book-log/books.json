@@ -4,20 +4,23 @@
     "title": "어린왕자",
     "author": "생텍쥐페리",
     "rating": 5,
-    "review": ""
+    "review": "",
+    "addedAt": "2026-11-09T00:00:00+09:00"
   },
   {
     "id": 2,
     "title": "아몬드",
     "author": "손원평",
     "rating": null,
-    "review": ""
+    "review": "",
+    "addedAt": "2026-11-09T00:00:00+09:00"
   },
   {
     "id": 3,
     "title": "달의 지배자",
     "author": "N.K. 제미신",
     "rating": null,
-    "review": ""
+    "review": "",
+    "addedAt": "2026-11-09T00:00:00+09:00"
   }
 ]
