@@ -6,10 +6,16 @@ const LEGACY_ADDED_AT = new Date(2026, 10, 9).toISOString(); // 월은 0부터 �
 
 // 저장된 데이터가 없을 때 처음 한 번만 넣는 책들
 const INITIAL_BOOKS = [
-  { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT },
-  { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
-  { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
+  { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
+  { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
+  { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
 ];
+
+// "인생책, 소설 ,인생책" 같은 입력을 ["인생책", "소설"]로 정리한다. (공백·빈 값·중복 제거)
+function parseTags(text) {
+  const tags = text.split(",").map((tag) => tag.trim()).filter((tag) => tag !== "");
+  return [...new Set(tags)];
+}
 
 // 저장된 책 목록을 읽어 온다. 처음 열었다면 초기 데이터를 먼저 저장한다.
 function loadBooks() {
@@ -19,12 +25,17 @@ function loadBooks() {
     return INITIAL_BOOKS;
   }
 
-  // 날짜 없이 저장된 예전 책에는 LEGACY_ADDED_AT을 채워서 다시 저장한다.
+  // 예전에 저장된 책에 없는 항목을 채워서 다시 저장한다.
+  // 날짜가 없으면 LEGACY_ADDED_AT, 태그가 없으면 빈 목록.
   const books = JSON.parse(saved);
   let changed = false;
   for (const book of books) {
     if (!book.addedAt) {
       book.addedAt = LEGACY_ADDED_AT;
+      changed = true;
+    }
+    if (!Array.isArray(book.tags)) {
+      book.tags = [];
       changed = true;
     }
   }
@@ -46,6 +57,15 @@ function renderBooks(books) {
     if (book.review !== "") {
       item.textContent += ` : ${book.review}`;
     }
+    if (book.tags.length > 0) {
+      item.textContent += ` ${book.tags.map((tag) => `#${tag}`).join(" ")}`;
+    }
+
+    const tagButton = document.createElement("button");
+    tagButton.type = "button";
+    tagButton.textContent = "태그 수정";
+    tagButton.addEventListener("click", () => editTags(book.id));
+    item.append(" ", tagButton);
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
@@ -55,6 +75,22 @@ function renderBooks(books) {
 
     list.appendChild(item);
   }
+}
+
+// 입력창으로 태그를 새로 받아 저장하고 목록을 다시 그린다.
+function editTags(id) {
+  const book = books.find((item) => item.id === id);
+  const input = prompt(
+    `"${book.title}"의 태그를 쉼표로 구분해 입력하세요. (모두 지우려면 비워 두세요)`,
+    book.tags.join(", ")
+  );
+  if (input === null) {
+    return; // 취소를 누르면 그대로 둔다.
+  }
+
+  book.tags = parseTags(input);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  renderBooks(books);
 }
 
 // 확인을 받은 뒤 책을 지우고 목록을 다시 그린다.
@@ -81,6 +117,7 @@ form.addEventListener("submit", (event) => {
   const author = document.getElementById("author").value.trim();
   const rating = document.getElementById("rating").value;
   const review = document.getElementById("review").value.trim();
+  const tags = parseTags(document.getElementById("tags").value);
 
   // 공백만 입력한 경우는 브라우저가 걸러 주지 않아서 직접 확인한다.
   if (title === "" || author === "") {
@@ -95,6 +132,7 @@ form.addEventListener("submit", (event) => {
     rating: rating === "" ? null : Number(rating),
     review,
     addedAt: new Date().toISOString(), // 입력한 시각 (리포트에서 날짜 표시·정렬에 사용)
+    tags,
   });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
 

@@ -144,6 +144,135 @@
       font-size: 14px;
     }
 
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .tag {
+      font-size: 12px;
+      color: #7a5a1e;
+      background: #f6ecd8;
+      border-radius: 999px;
+      padding: 3px 10px;
+    }
+
+    /* 태그로 찾기 */
+    .search {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px 24px;
+      margin-bottom: 32px;
+    }
+
+    .search h2 {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .search-form input {
+      flex: 1;
+      min-width: 220px;
+      font: inherit;
+      font-size: 15px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+    }
+
+    .search-form input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: -1px;
+    }
+
+    .search-form button,
+    .tag-button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .search-form button {
+      font-size: 14px;
+      padding: 9px 16px;
+    }
+
+    .search-form button[type="submit"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .tag-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .tag-button {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f6ecd8;
+      border-color: #f6ecd8;
+      color: #7a5a1e;
+    }
+
+    .tag-button:hover { border-color: var(--accent); }
+
+    .hint {
+      margin: 12px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .result-title {
+      margin: 20px 0 10px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      background: var(--bg);
+      white-space: nowrap;
+    }
+
+    td.nowrap { white-space: nowrap; }
+
+    td .rating { font-size: 14px; letter-spacing: 1px; }
+
     .empty-message {
       text-align: center;
       color: var(--muted);
@@ -175,6 +304,20 @@
       </div>
     </header>
 
+    <!-- 태그로 찾기: 태그를 입력하거나 아래 태그를 누르면 그 태그가 붙은 책만 표로 보여준다. -->
+    <section class="search">
+      <h2>🔍 태그로 찾기</h2>
+      <form class="search-form" id="tag-search">
+        <input type="text" id="tag-input" list="tag-options" autocomplete="off"
+               placeholder="예: 에세이  또는  에세이 태그가 붙은 책 보여줘">
+        <button type="submit">찾기</button>
+        <button type="button" id="tag-clear">지우기</button>
+      </form>
+      <datalist id="tag-options"></datalist>
+      <div class="tag-buttons" id="tag-buttons"></div>
+      <div id="tag-result"></div>
+    </section>
+
     <main>
       <ul class="cards" id="cards"></ul>
     </main>
@@ -191,21 +334,23 @@
 
     // 저장된 기록이 없을 때 보여줄 데이터 (books.json과 같은 내용)
     const INITIAL_BOOKS = [
-      { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT },
-      { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
-      { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT },
+      { id: 1, title: "어린왕자", author: "생텍쥐페리", rating: 5, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
+      { id: 2, title: "아몬드", author: "손원평", rating: null, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
+      { id: 3, title: "달의 지배자", author: "N.K. 제미신", rating: null, review: "", addedAt: LEGACY_ADDED_AT, tags: [] },
     ];
 
     // localStorage에 기록이 있으면 그걸 쓰고, 없으면 초기 데이터를 쓴다.
-    // 날짜 없는 예전 책은 화면에서만 LEGACY_ADDED_AT으로 보여준다. (저장은 앱이 한다)
+    // 날짜·태그가 없는 예전 책은 화면에서만 채워서 보여준다. (저장은 앱이 한다)
     function loadBooks() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === null) {
         return { books: INITIAL_BOOKS, fromStorage: false };
       }
-      const books = JSON.parse(saved).map((book) =>
-        book.addedAt ? book : { ...book, addedAt: LEGACY_ADDED_AT }
-      );
+      const books = JSON.parse(saved).map((book) => ({
+        ...book,
+        addedAt: book.addedAt || LEGACY_ADDED_AT,
+        tags: Array.isArray(book.tags) ? book.tags : [],
+      }));
       return { books, fromStorage: true };
     }
 
@@ -227,13 +372,15 @@
       return el;
     }
 
-    // 입력 날짜를 "2026년 11월 9일" 형태로 바꾼다. 날짜가 없으면 안내 문구를 쓴다.
-    function formatDate(addedAt) {
-      if (!addedAt) {
-        return "날짜 기록 없음";
-      }
+    // 입력 날짜를 "2026년 11월 9일" 형태로 바꾼다.
+    function formatDay(addedAt) {
       const date = new Date(addedAt);
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 기록`;
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+    }
+
+    // 카드에 쓰는 날짜 문구. 날짜가 없으면 안내 문구를 쓴다.
+    function formatDate(addedAt) {
+      return addedAt ? `${formatDay(addedAt)} 기록` : "날짜 기록 없음";
     }
 
     // 최신순 정렬: 입력 시각이 늦은 책이 앞으로, 날짜가 없는 책은 뒤로.
@@ -277,11 +424,158 @@
       }
 
       card.append(date, title, author, makeRating(book.rating), review);
+
+      // 태그가 있으면 카드 맨 아래에 #태그 라벨로 보여준다.
+      if (book.tags.length > 0) {
+        const tags = document.createElement("div");
+        tags.className = "tags";
+        for (const tag of book.tags) {
+          const label = document.createElement("span");
+          label.className = "tag";
+          label.textContent = `#${tag}`;
+          tags.appendChild(label);
+        }
+        card.appendChild(tags);
+      }
       return card;
     }
 
+    // ===== 태그로 찾기 =====
+
+    // 입력에서 찾을 태그를 뽑는다.
+    // "에세이", "#에세이", "에세이 태그가 붙은 책 보여줘" 모두 → "에세이"
+    function extractTag(text) {
+      const trimmed = text.trim();
+      const match = trimmed.match(/#?(\S+?)\s*태그/);
+      if (match) {
+        return match[1];
+      }
+      return trimmed.replace(/^#/, "");
+    }
+
+    // 모든 책의 태그를 모아 [태그, 권수] 목록으로 만든다. (많이 쓴 태그가 앞으로)
+    function countTags(books) {
+      const counts = new Map();
+      for (const book of books) {
+        for (const tag of book.tags) {
+          counts.set(tag, (counts.get(tag) || 0) + 1);
+        }
+      }
+      return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+    }
+
+    // 표의 칸 하나를 만든다.
+    function makeCell(content, className) {
+      const td = document.createElement("td");
+      if (className) td.className = className;
+      if (typeof content === "string") {
+        td.textContent = content;
+      } else {
+        td.appendChild(content);
+      }
+      return td;
+    }
+
+    // 태그가 붙은 책만 골라 표로 보여준다. (대소문자 구분 없이 태그 이름이 같은 책)
+    function showBooksByTag(books, text) {
+      const result = document.getElementById("tag-result");
+      result.innerHTML = "";
+
+      const tag = extractTag(text);
+      if (tag === "") {
+        return;
+      }
+
+      const matched = sortByNewest(
+        books.filter((book) => book.tags.some((t) => t.toLowerCase() === tag.toLowerCase()))
+      );
+
+      const heading = document.createElement("p");
+      heading.className = "result-title";
+      if (matched.length === 0) {
+        heading.textContent = `"${tag}" 태그가 붙은 책이 없어요.`;
+        const hint = document.createElement("p");
+        hint.className = "hint";
+        hint.textContent = "위에 있는 태그를 눌러 보거나, 앱에서 [태그 수정]으로 태그를 먼저 넣어 주세요.";
+        result.append(heading, hint);
+        return;
+      }
+      heading.textContent = `"${tag}" 태그가 붙은 책 ${matched.length}권`;
+
+      const table = document.createElement("table");
+      const head = table.createTHead().insertRow();
+      for (const name of ["제목", "작가", "평점", "한줄평", "태그", "입력 날짜"]) {
+        const th = document.createElement("th");
+        th.textContent = name;
+        head.appendChild(th);
+      }
+
+      const body = table.createTBody();
+      for (const book of matched) {
+        const row = body.insertRow();
+        row.append(
+          makeCell(book.title),
+          makeCell(book.author),
+          makeCell(makeRating(book.rating), "nowrap"),
+          makeCell(book.review || "-"),
+          makeCell(book.tags.map((t) => `#${t}`).join(" ")),
+          makeCell(book.addedAt ? formatDay(book.addedAt) : "-", "nowrap")
+        );
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "table-wrap";
+      wrap.appendChild(table);
+      result.append(heading, wrap);
+    }
+
+    // 검색칸, 자동완성 목록, 태그 버튼을 준비한다.
+    function setupTagSearch(books) {
+      const input = document.getElementById("tag-input");
+      const options = document.getElementById("tag-options");
+      const buttons = document.getElementById("tag-buttons");
+      const tagCounts = countTags(books);
+
+      if (tagCounts.length === 0) {
+        const hint = document.createElement("p");
+        hint.className = "hint";
+        hint.textContent = "아직 태그가 붙은 책이 없어요. 앱에서 [태그 수정]으로 태그를 넣어 보세요.";
+        buttons.replaceWith(hint);
+      }
+
+      for (const [tag, count] of tagCounts) {
+        const option = document.createElement("option");
+        option.value = tag;
+        options.appendChild(option);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tag-button";
+        button.textContent = `#${tag} (${count})`;
+        button.addEventListener("click", () => {
+          input.value = tag;
+          showBooksByTag(books, tag);
+        });
+        buttons.appendChild(button);
+      }
+
+      document.getElementById("tag-search").addEventListener("submit", (event) => {
+        event.preventDefault();
+        showBooksByTag(books, input.value);
+      });
+
+      document.getElementById("tag-clear").addEventListener("click", () => {
+        input.value = "";
+        showBooksByTag(books, "");
+        input.focus();
+      });
+    }
+
+    // ===== 전체 화면 그리기 =====
+
     function render() {
       const { books, fromStorage } = loadBooks();
+      setupTagSearch(books);
       const list = document.getElementById("cards");
 
       if (books.length === 0) {
