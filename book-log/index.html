@@ -47,6 +47,15 @@
       <h2>읽은 책 목록</h2>
       <ul id="book-list"></ul>
     </section>
+
+    <!-- 백업: 브라우저에 저장된 목록을 파일로 내보내거나, 파일에서 다시 불러온다 -->
+    <section>
+      <h2>데이터 백업</h2>
+      <button type="button" id="export-button">데이터 내보내기</button>
+      <button type="button" id="import-button">데이터 가져오기</button>
+      <input type="file" id="import-file" accept=".json,application/json" hidden>
+      <p>내보내기는 지금 목록을 books.json 파일로 내려받고, 가져오기는 그 파일로 목록을 통째로 바꿔요.</p>
+    </section>
   </main>
 
   <script src="app.js"></script>

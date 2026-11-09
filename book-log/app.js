@@ -105,8 +105,117 @@ function deleteBook(id) {
   renderBooks(books);
 }
 
+// ===== 데이터 내보내기 / 가져오기 =====
+
+// 지금 목록을 books.json 형식(보기 좋게 줄바꿈)의 파일로 내려받는다.
+function exportBooks() {
+  const json = JSON.stringify(books, null, 2) + "\n";
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "books.json";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+// 파일에서 읽은 책 하나를 앱 형식에 맞게 정리한다. 제목·작가가 없으면 오류를 낸다.
+function normalizeBook(raw, index) {
+  const position = `${index + 1}번째 책`;
+  if (typeof raw !== "object" || raw === null) {
+    throw new Error(`${position}의 형식이 올바르지 않아요.`);
+  }
+  const title = typeof raw.title === "string" ? raw.title.trim() : "";
+  const author = typeof raw.author === "string" ? raw.author.trim() : "";
+  if (title === "" || author === "") {
+    throw new Error(`${position}에 제목이나 작가가 없어요.`);
+  }
+
+  const rating = Number.isInteger(raw.rating) && raw.rating >= 1 && raw.rating <= 5 ? raw.rating : null;
+  const addedAt =
+    typeof raw.addedAt === "string" && !Number.isNaN(new Date(raw.addedAt).getTime())
+      ? raw.addedAt
+      : LEGACY_ADDED_AT;
+  const tags = Array.isArray(raw.tags)
+    ? parseTags(raw.tags.filter((tag) => typeof tag === "string").join(","))
+    : [];
+
+  return {
+    id: raw.id,
+    title,
+    author,
+    rating,
+    review: typeof raw.review === "string" ? raw.review.trim() : "",
+    addedAt,
+    tags,
+  };
+}
+
+// 파일 내용을 검사해서 책 목록으로 만든다. id가 없거나 겹치면 새 번호를 붙인다.
+function parseBooksFile(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("JSON 파일 형식이 아니에요.");
+  }
+  if (!Array.isArray(data)) {
+    throw new Error("책 목록([ ... ]) 형식이 아니에요.");
+  }
+
+  const imported = data.map(normalizeBook);
+  const usedIds = new Set();
+  let nextId = Math.max(0, ...imported.map((book) => (Number.isInteger(book.id) ? book.id : 0))) + 1;
+  for (const book of imported) {
+    if (!Number.isInteger(book.id) || book.id < 1 || usedIds.has(book.id)) {
+      book.id = nextId++;
+    }
+    usedIds.add(book.id);
+  }
+  return imported;
+}
+
+// 고른 파일을 읽어서, 확인을 받은 뒤 지금 목록을 파일 내용으로 바꾼다.
+async function importBooks(file) {
+  let imported;
+  try {
+    imported = parseBooksFile(await file.text());
+  } catch (error) {
+    alert(`가져오지 못했어요: ${error.message}\n지금 목록은 그대로 두었어요.`);
+    return;
+  }
+
+  const message =
+    `"${file.name}"에서 책 ${imported.length}권을 찾았어요.\n` +
+    `지금 목록(${books.length}권)을 이 내용으로 바꿀까요?\n` +
+    `(지금 목록이 필요하면 먼저 [데이터 내보내기]로 백업해 두세요)`;
+  if (!confirm(message)) {
+    return;
+  }
+
+  books.splice(0, books.length, ...imported); // 같은 배열을 유지한 채 내용만 바꾼다.
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+  renderBooks(books);
+  alert(`책 ${imported.length}권을 불러왔어요.`);
+}
+
 const books = loadBooks();
 renderBooks(books);
+
+document.getElementById("export-button").addEventListener("click", exportBooks);
+
+const importFile = document.getElementById("import-file");
+document.getElementById("import-button").addEventListener("click", () => importFile.click());
+importFile.addEventListener("change", async () => {
+  const file = importFile.files[0];
+  if (file) {
+    await importBooks(file);
+  }
+  importFile.value = ""; // 같은 파일을 다시 골라도 동작하게 비운다.
+});
 
 // 폼을 제출하면 새 책을 저장하고 목록을 다시 그린다.
 const form = document.getElementById("book-form");
